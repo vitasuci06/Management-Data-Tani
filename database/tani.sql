@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 22, 2025 at 05:56 PM
+-- Generation Time: Mar 04, 2026 at 09:55 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -469,6 +469,28 @@ INSERT INTO `hasil_panen` (`id_panen`, `id_pengguna`, `jenis_tanaman`, `luas_lah
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `kuota_pupuk`
+--
+
+CREATE TABLE `kuota_pupuk` (
+  `id_kuota` int(11) NOT NULL,
+  `jenis_pupuk` varchar(25) NOT NULL,
+  `total_kuota` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `kuota_pupuk`
+--
+
+INSERT INTO `kuota_pupuk` (`id_kuota`, `jenis_pupuk`, `total_kuota`) VALUES
+(1, 'Urea', 200),
+(2, 'NPK Phonska', 150),
+(3, 'ZA', 100),
+(4, 'SP-36', 80);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `pengguna`
 --
 
@@ -501,7 +523,7 @@ INSERT INTO `pengguna` (`id_pengguna`, `nama_pengguna`, `nik_pengguna`, `no_kart
 (16, 'Maridi', '3403011402730001', '1874974138897127', 'Anggota'),
 (17, 'Teguh Widodo', '3403011902770001', '6013010649325884', 'Anggota'),
 (18, 'Wasimin', '3403011105630003', '6013010649325793', 'Anggota'),
-(19, 'Puput Rismawan', '3403092708840002', '837418', 'Anggota'),
+(19, 'Puput Rismawan', '3403092708840002', '6013010649327815', 'Anggota'),
 (20, 'Sukino', '3403010604570004', '6013010649325744', 'Anggota'),
 (21, 'Rejo Suwito', '3403011205540001', '6013011621623775', 'Anggota'),
 (22, 'Tukino', '3403011207600003', '6013010649325777', 'Anggota'),
@@ -544,6 +566,7 @@ CREATE TABLE `pupuk_subsidi` (
   `id_pengguna` int(11) NOT NULL,
   `tanggal_pengajuan` date NOT NULL,
   `jumlah_pupuk` int(11) NOT NULL,
+  `jenis_pupuk` varchar(25) NOT NULL,
   `harga_satuan` int(11) NOT NULL,
   `total_harga` int(11) GENERATED ALWAYS AS (`jumlah_pupuk` * `harga_satuan`) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -552,12 +575,11 @@ CREATE TABLE `pupuk_subsidi` (
 -- Dumping data for table `pupuk_subsidi`
 --
 
-INSERT INTO `pupuk_subsidi` (`id_pupuk`, `id_pengguna`, `tanggal_pengajuan`, `jumlah_pupuk`, `harga_satuan`) VALUES
-(1, 5, '2025-01-05', 2, 135000),
-(2, 6, '2025-01-07', 2, 135000),
-(3, 7, '2025-03-10', 2, 135000),
-(4, 8, '2025-03-12', 1, 135000),
-(5, 9, '2025-05-01', 2, 135000);
+INSERT INTO `pupuk_subsidi` (`id_pupuk`, `id_pengguna`, `tanggal_pengajuan`, `jumlah_pupuk`, `jenis_pupuk`, `harga_satuan`) VALUES
+(1, 5, '2025-01-05', 2, 'Urea', 135000),
+(2, 6, '2025-01-07', 2, 'Urea', 135000),
+(3, 7, '2025-03-10', 1, 'Urea', 135000),
+(4, 8, '2025-03-12', 2, 'ZA', 135000);
 
 --
 -- Indexes for dumped tables
@@ -576,6 +598,12 @@ ALTER TABLE `bantuan`
 ALTER TABLE `hasil_panen`
   ADD PRIMARY KEY (`id_panen`),
   ADD KEY `id_pengguna` (`id_pengguna`);
+
+--
+-- Indexes for table `kuota_pupuk`
+--
+ALTER TABLE `kuota_pupuk`
+  ADD PRIMARY KEY (`id_kuota`);
 
 --
 -- Indexes for table `pengguna`
@@ -614,6 +642,12 @@ ALTER TABLE `bantuan`
 --
 ALTER TABLE `hasil_panen`
   MODIFY `id_panen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1459;
+
+--
+-- AUTO_INCREMENT for table `kuota_pupuk`
+--
+ALTER TABLE `kuota_pupuk`
+  MODIFY `id_kuota` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `pengguna`
