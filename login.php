@@ -2,7 +2,7 @@
 session_start();
 include 'koneksi.php';
 
-// Jika sudah login, arahkan ke dashboard pengurus
+//Jika sudah login, arahkan ke dashboard pengurus
 if (isset($_SESSION['login'])) {
     header("Location: index_pengurus.php");
     exit;
