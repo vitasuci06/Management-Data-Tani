@@ -139,7 +139,6 @@ include 'header_pengurus.php';
 
 <div class="modal-header">
     <h5 class="modal-title">Tambah Anggota</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
@@ -181,7 +180,7 @@ if (isset($_POST['tambah'])) {
 }
 ?>
 
-<!--MODAL EDIT -->
+<!-- MODAL EDIT -->
 <?php
 $edit = mysqli_query($koneksi, "SELECT * FROM pengguna WHERE jabatan = 'Anggota'");
 while ($rowEdit = mysqli_fetch_assoc($edit)) {
@@ -193,7 +192,6 @@ while ($rowEdit = mysqli_fetch_assoc($edit)) {
 
 <div class="modal-header">
     <h5 class="modal-title">Edit Anggota</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
