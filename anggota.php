@@ -1,7 +1,21 @@
 <?php
 include 'koneksi.php';
 include 'header.php';
+
+function sensorNIK($nik) {
+    // Pastikan panjang cukup
+    if (strlen($nik) <= 7) {
+        return $nik;
+    }
+
+    $awal = substr($nik, 0, 4);           
+    $akhir = substr($nik, -3);  
+    $tengah = str_repeat('*', strlen($nik) - 7);
+
+    return $awal . $tengah . $akhir;
+}
 ?>
+
 
 <main class="main">
 <div class="container">
@@ -67,7 +81,7 @@ include 'header.php';
         <tr>
             <td><?= $no++; ?></td>
             <td><?= htmlspecialchars($row['nama_pengguna']); ?></td>
-            <td><?= htmlspecialchars($row['nik_pengguna']); ?></td>
+            <td><?= sensorNIK(htmlspecialchars($row['nik_pengguna'])); ?></td>
             <td><?= $row['no_kartutani'] ? htmlspecialchars($row['no_kartutani']) : 'N/A'; ?></td>
         </tr>
     <?php } } ?>
