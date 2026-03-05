@@ -219,12 +219,11 @@ if (mysqli_num_rows($result) == 0) {
 
 <div class="modal-header">
     <h5 class="modal-title">Tambah Data Panen</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
 <label>Nama Petani</label>
-<select name="id_pengguna" class="form-control" required>
+<select name="id_pengguna" class="form-select" required>
 <option value="">- Pilih Petani -</option>
 <?php
 $q = mysqli_query($koneksi, "SELECT * FROM pengguna ORDER BY nama_pengguna ASC");
@@ -246,7 +245,7 @@ while ($p = mysqli_fetch_assoc($q)) {
 <label class="mt-2">Periode Panen</label>
 <input type="date" name="periode_panen" class="form-control" required>
 
-<label class="mt-2">Jumlah Panen (Ton)</label>
+<label class="mt-2">Jumlah Panen (kg)</label>
 <input type="number" step="0.1" name="jumlah_panen" class="form-control" required>
 
 <label class="mt-2">Jumlah Pupuk (Kg)</label>
@@ -254,7 +253,8 @@ while ($p = mysqli_fetch_assoc($q)) {
 </div>
 
 <div class="modal-footer">
-<button type="submit" name="tambah" class="btn btn-primary">Tambah</button>
+    <button type="submit" name="tambah" class="btn btn-primary">Tambah</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
 </div>
 
 </form>
@@ -283,7 +283,12 @@ if (isset($_POST['tambah'])) {
 }
 
 /* form edit*/
-$qEdit = mysqli_query($koneksi, "SELECT * FROM hasil_panen");
+$qEdit = mysqli_query($koneksi, "
+    SELECT hp.*, p.nama_pengguna
+    FROM hasil_panen hp
+    JOIN pengguna p ON hp.id_pengguna = p.id_pengguna
+");
+
 while ($e = mysqli_fetch_assoc($qEdit)) {
 ?>
 <div class="modal fade" id="modalEdit<?= $e['id_panen']; ?>" tabindex="-1">
@@ -293,11 +298,20 @@ while ($e = mysqli_fetch_assoc($qEdit)) {
 
 <div class="modal-header">
 <h5 class="modal-title">Edit Data Panen</h5>
-<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
 <input type="hidden" name="id_panen" value="<?= $e['id_panen']; ?>">
+
+<input type="hidden" name="id_pengguna" value="<?= $e['id_pengguna']; ?>">
+
+<input type="hidden" name="id_pengguna" value="<?= $e['id_pengguna']; ?>">
+
+<label>Nama Petani</label>
+<div class="readonly-text">
+    <?= htmlspecialchars($e['nama_pengguna']); ?>
+</div>
+
 
 <label>Jenis Tanaman</label>
 <input type="text" name="jenis_tanaman" value="<?= $e['jenis_tanaman']; ?>" class="form-control" required>
@@ -311,7 +325,7 @@ while ($e = mysqli_fetch_assoc($qEdit)) {
 <label class="mt-2">Periode Panen</label>
 <input type="date" name="periode_panen" value="<?= $e['periode_panen']; ?>" class="form-control" required>
 
-<label class="mt-2">Jumlah Panen (Ton)</label>
+<label class="mt-2">Jumlah Panen (kg)</label>
 <input type="number" step="0.1" name="jumlah_panen" value="<?= $e['jumlah_panen']; ?>" class="form-control" required>
 
 <label class="mt-2">Jumlah Pupuk (Kg)</label>
@@ -319,7 +333,8 @@ while ($e = mysqli_fetch_assoc($qEdit)) {
 </div>
 
 <div class="modal-footer">
-<button type="submit" name="update" class="btn btn-success">Simpan</button>
+    <button type="submit" name="update" class="btn btn-success">Simpan</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
 </div>
 
 </form>
