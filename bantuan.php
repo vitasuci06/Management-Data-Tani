@@ -1,33 +1,37 @@
 <?php
 include 'koneksi.php';
 include 'header.php';
+
+$jenisDipilih  = isset($_GET['jenis']) ? $_GET['jenis'] : '';
+$tahunDipilih  = isset($_GET['tahun']) ? $_GET['tahun'] : '';
+$search        = isset($_GET['search']) ? $_GET['search'] : '';
 ?>
 
 <main class="main">
 <div class="container">
 
 <?php
-// ================= JUDUL FILTER =================
 $jenisbantuan = "Semua Jenis Bantuan";
-if (@$_GET['jenis'] == 1) $jenisbantuan = "Bantuan Alat Tani";
-elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
+if ($jenisDipilih == 1) {
+    $jenisbantuan = "Bantuan Alat Tani";
+} elseif ($jenisDipilih == 2) {
+    $jenisbantuan = "Bantuan Bibit Pertanian";
+}
 ?>
 
 <h2 class="main-title">Data <?= $jenisbantuan; ?></h2>
-<div class="filter-action filter-responsive mb-3">
 
-    <form method="GET" id="formbantuan" class="filter-form">
+<div class="filter-action filter-responsive mb-3">
+    <form method="GET" class="filter-form">
 
         <!-- FILTER JENIS -->
         <div class="filter-item">
-            <select name="jenis"
-                    class="form-select"
-                    onchange="this.form.submit()">
+            <select name="jenis" class="form-select" onchange="this.form.submit()">
                 <option value="">Semua Jenis Bantuan</option>
-                <option value="1" <?= (@$_GET['jenis']==1?'selected':''); ?>>
+                <option value="1" <?= ($jenisDipilih==1?'selected':''); ?>>
                     Bantuan Alat Tani
                 </option>
-                <option value="2" <?= (@$_GET['jenis']==2?'selected':''); ?>>
+                <option value="2" <?= ($jenisDipilih==2?'selected':''); ?>>
                     Bantuan Bibit Pertanian
                 </option>
             </select>
@@ -35,9 +39,7 @@ elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
 
         <!-- FILTER TAHUN -->
         <div class="filter-item">
-            <select name="tahun"
-                    class="form-select"
-                    onchange="this.form.submit()">
+            <select name="tahun" class="form-select" onchange="this.form.submit()">
                 <option value="">Semua Tahun</option>
                 <?php
                 $tahunQuery = mysqli_query($koneksi, "
@@ -53,12 +55,17 @@ elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
             </select>
         </div>
 
+        <?php if ($search != "") { ?>
+            <input type="hidden" name="search" value="<?= htmlspecialchars($search); ?>">
+        <?php } ?>
+
     </form>
 </div>
 
-
 <?php
-// ================= DATA KETUA =================
+// ============================
+// DATA KETUA
+// ============================
 $qKetua = mysqli_query($koneksi, "
     SELECT id_pengguna, nama_pengguna, jabatan
     FROM pengguna
@@ -91,16 +98,24 @@ $ketua = mysqli_fetch_assoc($qKetua);
 $no = 1;
 $where = " WHERE 1=1 ";
 
-if (isset($_GET['jenis']) && $_GET['jenis'] != "") {
-    if ($_GET['jenis'] == 1) {
+// FILTER JENIS
+if ($jenisDipilih != "") {
+    if ($jenisDipilih == 1) {
         $where .= " AND b.jenis_bantuan='Alat'";
-    } elseif ($_GET['jenis'] == 2) {
+    } elseif ($jenisDipilih == 2) {
         $where .= " AND b.jenis_bantuan='Bibit'";
     }
 }
 
-if (isset($_GET['search']) && $_GET['search'] != "") {
-    $search = mysqli_real_escape_string($koneksi, $_GET['search']);
+// FILTER TAHUN
+if ($tahunDipilih != "") {
+    $tahunDipilih = mysqli_real_escape_string($koneksi, $tahunDipilih);
+    $where .= " AND YEAR(b.tanggal_diberikan) = '$tahunDipilih'";
+}
+
+// FILTER SEARCH DARI HEADER
+if ($search != "") {
+    $search = mysqli_real_escape_string($koneksi, $search);
     $where .= " AND (
         b.nama_bantuan LIKE '%$search%' OR
         b.jenis_bantuan LIKE '%$search%' OR
@@ -115,17 +130,19 @@ $query = "
     $where
     ORDER BY b.tanggal_diberikan DESC
 ";
+
 $result = mysqli_query($koneksi, $query);
 
 if (mysqli_num_rows($result) == 0) {
     echo "<tr>
-            <td colspan='6' class='text-center'>
+            <td colspan='5' class='text-center'>
                 Data bantuan belum tersedia
             </td>
           </tr>";
 } else {
     while ($row = mysqli_fetch_assoc($result)) {
 ?>
+
 <tr>
     <td><?= $no++; ?></td>
     <td><?= $row['jenis_bantuan']; ?></td>
@@ -142,21 +159,15 @@ if (mysqli_num_rows($result) == 0) {
         }
         ?>
     </td>
-
 </tr>
+
 <?php } } ?>
+
 </tbody>
 </table>
 </div>
 
 </div>
 </main>
-<script>
-function autoResetSearch() {
-    let q = document.getElementById("search").value;
-    if (q.trim() === "") {
-        window.location.href = "bantuan.php";
-    }
-}
-</script>
+
 <?php include 'footer.php'; ?>
