@@ -111,7 +111,6 @@ $result = mysqli_query($koneksi, $query);
     <form method="POST">
         <div class="modal-header">
             <h5 class="modal-title">Tambah Pengurus</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body">
@@ -132,15 +131,15 @@ $result = mysqli_query($koneksi, $query);
                     <i class="bi bi-eye-slash" id="icon-passwordTambah"></i>
                 </span>
             </div>
-
-            <label class="mt-2">Jabatan</label>
-            <select name="jabatan" class="form-control" required>
+           <label class="mt-2">Jabatan</label>
+            <select name="jabatan" class="form-select" required>
                 <option value="">- Pilih Jabatan -</option>
                 <option value="ketua">Ketua</option>
                 <option value="wakil ketua">Wakil Ketua</option>
                 <option value="sekretaris">Sekretaris</option>
                 <option value="bendahara">Bendahara</option>
             </select>
+
 
             <label class="mt-2">Nomor Kartu Tani</label>
             <input type="text" name="no_kartutani" class="form-control">
@@ -198,7 +197,6 @@ while ($rowEdit = mysqli_fetch_assoc($edit)) { ?>
     <form method="POST">
         <div class="modal-header">
             <h5 class="modal-title">Edit Pengurus</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body">
@@ -229,12 +227,13 @@ while ($rowEdit = mysqli_fetch_assoc($edit)) { ?>
             </div>
 
             <label class="mt-2">Jabatan</label>
-            <select name="jabatan" class="form-control" required>
-                <option value="ketua" <?= $rowEdit['jabatan']=='ketua' ? 'selected':''; ?>>Ketua</option>
-                <option value="wakil ketua" <?= $rowEdit['jabatan']=='wakil ketua' ? 'selected':''; ?>>Wakil Ketua</option>
-                <option value="sekretaris" <?= $rowEdit['jabatan']=='sekretaris' ? 'selected':''; ?>>Sekretaris</option>
-                <option value="bendahara" <?= $rowEdit['jabatan']=='bendahara' ? 'selected':''; ?>>Bendahara</option>
+            <select name="jabatan" class="form-select" required>
+                <option value="ketua" <?= $rowEdit['jabatan']=='ketua'?'selected':''; ?>>Ketua</option>
+                <option value="wakil ketua" <?= $rowEdit['jabatan']=='wakil ketua'?'selected':''; ?>>Wakil Ketua</option>
+                <option value="sekretaris" <?= $rowEdit['jabatan']=='sekretaris'?'selected':''; ?>>Sekretaris</option>
+                <option value="bendahara" <?= $rowEdit['jabatan']=='bendahara'?'selected':''; ?>>Bendahara</option>
             </select>
+
 
             <label class="mt-2">Nomor Kartu Tani</label>
             <input type="text" name="no_kartutani" value="<?= htmlspecialchars($rowEdit['no_kartutani']); ?>" class="form-control">
