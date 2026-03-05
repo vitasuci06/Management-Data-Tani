@@ -1,8 +1,6 @@
 <?php
 include 'koneksi.php';
 include 'header_pengurus.php';
-
-$tahunDipilih = isset($_GET['tahun']) ? $_GET['tahun'] : '';
 ?>
 
 <main class="main">
@@ -10,162 +8,211 @@ $tahunDipilih = isset($_GET['tahun']) ? $_GET['tahun'] : '';
 
 <h2 class="main-title">Kelola Data Pengajuan Pupuk Subsidi</h2>
 
-<div class="filter-action filter-responsive mb-3">
+<?php
+$qKuota = mysqli_query($koneksi, "SELECT * FROM kuota_pupuk");
+?>
 
-    <button class="btn btn-primary btn-add"
-            data-bs-toggle="modal"
-            data-bs-target="#modalTambah">
-        + Tambah Pengajuan Pupuk
-    </button>
+<!-- ===================== KARTU KUOTA ===================== -->
+<div class="row mb-4">
+<?php
+while ($k = mysqli_fetch_assoc($qKuota)) {
 
-    <form method="GET" id="formpupuk" class="filter-form">
+    $jenis = $k['jenis_pupuk'];
 
-        <!-- FILTER TAHUN -->
-        <div class="filter-item">
-            <select name="tahun"
-                    class="form-select"
-                    onchange="this.form.submit()">
-                <option value="">Semua Tahun</option>
-                <?php
-                $tahunQuery = mysqli_query($koneksi, "
-                    SELECT DISTINCT YEAR(tanggal_pengajuan) AS tahun
-                    FROM pupuk_subsidi
-                    ORDER BY tahun DESC
-                ");
-                while ($t = mysqli_fetch_assoc($tahunQuery)) {
-                    $selected = ($tahunDipilih == $t['tahun']) ? 'selected' : '';
-                    echo "<option value='{$t['tahun']}' $selected>{$t['tahun']}</option>";
-                }
-                ?>
-            </select>
+    $qTerpakai = mysqli_query($koneksi,"
+        SELECT SUM(jumlah_pupuk) as terpakai
+        FROM pupuk_subsidi
+        WHERE jenis_pupuk='$jenis'
+    ");
+    $dataTerpakai = mysqli_fetch_assoc($qTerpakai);
+    $terpakai = $dataTerpakai['terpakai'] ?? 0;
+
+    $sisa = $k['total_kuota'] - $terpakai;
+
+    if ($sisa <= 0) {
+        $warna = "danger";
+        $status = "HABIS";
+        $icon = "bi-x-circle-fill";
+    } elseif ($sisa <= 10) {
+        $warna = "warning";
+        $status = "Hampir Habis";
+        $icon = "bi-exclamation-triangle-fill";
+    } else {
+        $warna = "success";
+        $status = "Tersedia";
+        $icon = "bi-check-circle-fill";
+    }
+?>
+<div class="col-md-3 mb-3">
+    <div class="kuota-card border-<?= $warna ?>">
+        <div class="kuota-icon-<?= $warna ?>">
+            <i class="bi <?= $icon ?>"></i>
         </div>
-
-    </form>
+        <div class="kuota-content">
+            <p class="fw-semibold mb-2"><?= htmlspecialchars($jenis); ?></p>
+            <h2><?= $sisa ?> <small>sak</small></h2>
+            <small>
+                Total: <?= $k['total_kuota']; ?> sak |
+                Terpakai: <?= $terpakai; ?> sak
+            </small>
+            <div class="mt-2">
+                <span class="badge bg-<?= $warna ?>">
+                    <?= $status; ?>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+<?php } ?>
 </div>
 
-<!--  TABLE  -->
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
++ Tambah Pengajuan
+</button>
+
+<button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modalKuota">
++ Tambah Kuota
+</button>
+
+<!-- ===================== TABLE ===================== -->
 <div class="table-wrapper">
 <table class="table table-bordered table-striped">
 <thead class="table-hijau">
 <tr>
-    <th>No</th>
-    <th>Nama Petani</th>
-    <th>No Kartu Tani</th>
-    <th>Tanggal Pengajuan</th>
-    <th>Jumlah Pupuk</th>
-    <th>Harga Satuan</th>
-    <th>Total Harga</th>
-    <th width="170px">Aksi</th>
+<th>No</th>
+<th>Nama Petani</th>
+<th>No Kartu Tani</th>
+<th>Tanggal</th>
+<th>Jumlah</th>
+<th>Jenis</th>
+<th>Harga Satuan</th>
+<th>Total Harga</th>
+<th width="170px">Aksi</th>
 </tr>
 </thead>
 <tbody>
 
 <?php
 $no = 1;
-$where = " WHERE 1=1 ";
-
-/* FILTER TAHUN */
-if (isset($_GET['tahun']) && $_GET['tahun'] != "") {
-    $tahun = mysqli_real_escape_string($koneksi, $_GET['tahun']);
-    $where .= " AND YEAR(ps.tanggal_pengajuan) = '$tahun'";
-}
-
-/* SEARCH */
-if (isset($_GET['search']) && $_GET['search'] != "") {
-    $search = mysqli_real_escape_string($koneksi, $_GET['search']);
-    $where .= " AND (
-        u.nama_pengguna LIKE '%$search%' OR
-        u.no_kartutani LIKE '%$search%'
-    )";
-}
 
 $query = "
-    SELECT 
-        ps.id_pupuk,
-        u.nama_pengguna,
-        u.no_kartutani,
-        ps.tanggal_pengajuan,
-        ps.jumlah_pupuk,
-        ps.harga_satuan,
-        ps.total_harga
-    FROM pupuk_subsidi ps
-    JOIN pengguna u ON ps.id_pengguna = u.id_pengguna
-    $where
-    ORDER BY ps.tanggal_pengajuan DESC
+SELECT 
+    ps.*, 
+    u.nama_pengguna,
+    u.no_kartutani
+FROM pupuk_subsidi ps
+JOIN pengguna u ON ps.id_pengguna = u.id_pengguna
+ORDER BY ps.tanggal_pengajuan DESC
 ";
 
 $result = mysqli_query($koneksi, $query);
 
 if (mysqli_num_rows($result) == 0) {
-    echo "<tr>
-            <td colspan='8' class='text-center'>
-                Data pupuk subsidi belum tersedia
-            </td>
-          </tr>";
+    echo "<tr><td colspan='9' class='text-center'>Data belum tersedia</td></tr>";
 } else {
-while ($row = mysqli_fetch_assoc($result)) {
+    while ($row = mysqli_fetch_assoc($result)) {
 ?>
 <tr>
-    <td><?= $no++; ?></td>
-    <td><?= htmlspecialchars($row['nama_pengguna']); ?></td>
-    <td><?= htmlspecialchars($row['no_kartutani']); ?></td>
-    <td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
-    <td><?= $row['jumlah_pupuk']; ?></td>
-    <td>Rp <?= number_format($row['harga_satuan']); ?></td>
-    <td>Rp <?= number_format($row['total_harga']); ?></td>
-    <td>
-        <button class="btn btn-warning btn-sm"
-            data-bs-toggle="modal"
-            data-bs-target="#modalEdit<?= $row['id_pupuk']; ?>">
-            Edit
-        </button>
+<td><?= $no++; ?></td>
+<td><?= htmlspecialchars($row['nama_pengguna']); ?></td>
+<td><?= htmlspecialchars($row['no_kartutani']); ?></td>
+<td><?= date('d-m-Y', strtotime($row['tanggal_pengajuan'])); ?></td>
+<td><?= $row['jumlah_pupuk']; ?> sak</td>
+<td><?= htmlspecialchars($row['jenis_pupuk']); ?></td>
+<td>Rp <?= number_format($row['harga_satuan']); ?></td>
+<td>Rp <?= number_format($row['total_harga']); ?></td>
+<td>
+    <button class="btn btn-warning btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#modalEdit<?= $row['id_pupuk']; ?>">
+        Edit
+    </button>
 
-        <a href="?hapus=<?= $row['id_pupuk']; ?>"
-           onclick="return confirm('Hapus data pupuk?')"
-           class="btn btn-danger btn-sm">
-           Hapus
-        </a>
-    </td>
+    <a href="?hapus=<?= $row['id_pupuk']; ?>"
+       onclick="return confirm('Hapus data?')"
+       class="btn btn-danger btn-sm">
+       Hapus
+    </a>
+</td>
 </tr>
-<?php } } ?>
+<!-- ===================== MODAL EDIT ===================== -->
+<div class="modal fade" id="modalEdit<?= $row['id_pupuk']; ?>" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+<form method="POST">
+
+<div class="modal-header">
+<h5>Edit Pengajuan</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<input type="hidden" name="id_pupuk" value="<?= $row['id_pupuk']; ?>">
+
+<label>Jenis Pupuk</label>
+<input type="text" name="jenis_pupuk"
+       value="<?= htmlspecialchars($row['jenis_pupuk']); ?>"
+       class="form-control" required>
+
+<label class="mt-2">Jumlah (sak)</label>
+<input type="number" name="jumlah_pupuk"
+       value="<?= $row['jumlah_pupuk']; ?>"
+       class="form-control" required>
+
+<label class="mt-2">Harga Satuan</label>
+<input type="number" name="harga_satuan"
+       value="<?= $row['harga_satuan']; ?>"
+       class="form-control" required>
+
+</div>
+
+<div class="modal-footer">
+<button type="submit" name="edit" class="btn btn-primary">
+Simpan
+</button>
+</div>
+
+</form>
+</div>
+</div>
+</div>
+
+<?php }} ?>
 </tbody>
 </table>
 </div>
 
-<!-- Modal tambah -->
+</div>
+</main>
+
+<!-- ===================== MODAL TAMBAH PENGAJUAN ===================== -->
 <div class="modal fade" id="modalTambah">
 <div class="modal-dialog">
 <div class="modal-content">
 <form method="POST">
 
 <div class="modal-header">
-    <h5 class="modal-title">Tambah Pupuk Subsidi</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<h5>Tambah Pengajuan</h5>
 </div>
 
 <div class="modal-body">
 
 <label>Petani</label>
-<select name="id_pengguna" class="form-control" required>
-    <option value="">-- Pilih Petani --</option>
-    <?php
-    $petani = mysqli_query($koneksi, "
-        SELECT id_pengguna, nama_pengguna, no_kartutani
-        FROM pengguna
-        ORDER BY nama_pengguna ASC
-    ");
-    while ($p = mysqli_fetch_assoc($petani)) {
-        echo "<option value='{$p['id_pengguna']}'>
-            {$p['nama_pengguna']} - {$p['no_kartutani']}
-        </option>";
-    }
-    ?>
+<select name="id_pengguna" class="form-select" required>
+<option value="">-- Pilih --</option>
+<?php
+$petani = mysqli_query($koneksi,"SELECT * FROM pengguna");
+while ($p = mysqli_fetch_assoc($petani)) {
+    echo "<option value='$p[id_pengguna]'>$p[nama_pengguna]</option>";
+}
+?>
 </select>
 
-<label class="mt-2">Tanggal Pengajuan</label>
-<input type="date" name="tanggal_pengajuan" class="form-control" required>
+<label class="mt-2">Jenis Pupuk</label>
+<input type="text" name="jenis_pupuk" class="form-control" required>
 
-<label class="mt-2">Jumlah Pupuk</label>
+<label class="mt-2">Jumlah (sak)</label>
 <input type="number" name="jumlah_pupuk" class="form-control" required>
 
 <label class="mt-2">Harga Satuan</label>
@@ -174,7 +221,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <div class="modal-footer">
-    <button type="submit" name="tambah" class="btn btn-primary">Simpan</button>
+<button type="submit" name="tambah" class="btn btn-primary">Simpan</button>
 </div>
 
 </form>
@@ -182,115 +229,198 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 </div>
 
-<?php
-/* PROSES TAMBAH */
-if (isset($_POST['tambah'])) {
-
-    $total = $_POST['jumlah_pupuk'] * $_POST['harga_satuan'];
-
-    mysqli_query($koneksi, "
-        INSERT INTO pupuk_subsidi
-        (id_pengguna, tanggal_pengajuan, jumlah_pupuk, harga_satuan, total_harga)
-        VALUES (
-            '$_POST[id_pengguna]',
-            '$_POST[tanggal_pengajuan]',
-            '$_POST[jumlah_pupuk]',
-            '$_POST[harga_satuan]',
-            '$total'
-        )
-    ");
-
-    echo "<script>
-        alert('Data pupuk berhasil ditambahkan');
-        location='kelola_pupuk.php';
-    </script>";
-}
-?>
-
-<!--  MODAL EDIT  -->
-<?php
-$qEdit = mysqli_query($koneksi, "SELECT * FROM pupuk_subsidi");
-while ($e = mysqli_fetch_assoc($qEdit)) {
-?>
-<div class="modal fade" id="modalEdit<?= $e['id_pupuk']; ?>">
+<!-- ===================== MODAL TAMBAH KUOTA ===================== -->
+<div class="modal fade" id="modalKuota">
 <div class="modal-dialog">
 <div class="modal-content">
 <form method="POST">
 
 <div class="modal-header">
-    <h5 class="modal-title">Edit Pupuk Subsidi</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<h5>Tambah Kuota</h5>
 </div>
 
 <div class="modal-body">
-<input type="hidden" name="id_pupuk" value="<?= $e['id_pupuk']; ?>">
 
-<label>Jumlah Pupuk</label>
-<input type="number" name="jumlah_pupuk"
-       value="<?= $e['jumlah_pupuk']; ?>"
-       class="form-control" required>
+<label>Jenis Pupuk</label>
+<input type="text" name="jenis_kuota"
+       class="form-control"
+       placeholder="Contoh: Urea, NPK"
+       required>
 
-<label class="mt-2">Harga Satuan</label>
-<input type="number" name="harga_satuan"
-       value="<?= $e['harga_satuan']; ?>"
-       class="form-control" required>
+<label class="mt-2">Tambah Kuota (sak)</label>
+<input type="number"
+       name="jumlah_tambah"
+       class="form-control"
+       min="1"
+       required>
+
 </div>
 
 <div class="modal-footer">
-    <button type="submit" name="update" class="btn btn-success">Update</button>
+<button type="submit" name="tambah_kuota" class="btn btn-success">
+Simpan
+</button>
 </div>
 
 </form>
 </div>
 </div>
 </div>
-<?php } ?>
+
+
 
 <?php
-/* PROSES UPDATE */
-if (isset($_POST['update'])) {
+// ================= TAMBAH PENGAJUAN =================
+if (isset($_POST['tambah'])) {
 
-    $total = $_POST['jumlah_pupuk'] * $_POST['harga_satuan'];
+    $jenis = mysqli_real_escape_string($koneksi, $_POST['jenis_pupuk']);
+    $jumlah = (int) $_POST['jumlah_pupuk'];
+    $harga  = (int) $_POST['harga_satuan'];
 
-    mysqli_query($koneksi, "
-        UPDATE pupuk_subsidi SET
-            jumlah_pupuk='$_POST[jumlah_pupuk]',
-            harga_satuan='$_POST[harga_satuan]',
-            total_harga='$total'
-        WHERE id_pupuk='$_POST[id_pupuk]'
+    $qKuota = mysqli_query($koneksi,"
+        SELECT total_kuota FROM kuota_pupuk
+        WHERE jenis_pupuk='$jenis'
     ");
 
+    if (mysqli_num_rows($qKuota) == 0) {
+        echo "<script>alert('Jenis pupuk belum memiliki kuota!');</script>";
+    } else {
+
+        $dataKuota = mysqli_fetch_assoc($qKuota);
+
+        $qTerpakai = mysqli_query($koneksi,"
+            SELECT SUM(jumlah_pupuk) as terpakai
+            FROM pupuk_subsidi
+            WHERE jenis_pupuk='$jenis'
+        ");
+
+        $dataTerpakai = mysqli_fetch_assoc($qTerpakai);
+        $terpakai = $dataTerpakai['terpakai'] ?? 0;
+
+        $sisa = $dataKuota['total_kuota'] - $terpakai;
+
+        if ($jumlah > $sisa) {
+            echo "<script>alert('Kuota tidak mencukupi! Sisa: $sisa sak');</script>";
+        } else {
+
+            $total = $jumlah * $harga;
+
+            mysqli_query($koneksi,"
+                INSERT INTO pupuk_subsidi
+                (id_pengguna,tanggal_pengajuan,jumlah_pupuk,jenis_pupuk,harga_satuan,total_harga)
+                VALUES
+                ('$_POST[id_pengguna]',NOW(),'$jumlah','$jenis','$harga','$total')
+            ");
+
+            echo "<script>
+            alert('Berhasil ditambahkan');
+            location='kelola_pupuk.php';
+            </script>";
+        }
+    }
+}
+
+// ================= TAMBAH KUOTA =================
+if (isset($_POST['tambah_kuota'])) {
+
+    $jenis = mysqli_real_escape_string($koneksi, $_POST['jenis_kuota']);
+    $jumlah = (int) $_POST['jumlah_tambah'];
+
+    $cek = mysqli_query($koneksi,"
+        SELECT * FROM kuota_pupuk
+        WHERE jenis_pupuk='$jenis'
+    ");
+
+    if (mysqli_num_rows($cek) > 0) {
+
+        mysqli_query($koneksi,"
+            UPDATE kuota_pupuk
+            SET total_kuota = total_kuota + $jumlah
+            WHERE jenis_pupuk='$jenis'
+        ");
+
+    } else {
+
+        mysqli_query($koneksi,"
+            INSERT INTO kuota_pupuk (jenis_pupuk, total_kuota)
+            VALUES ('$jenis', '$jumlah')
+        ");
+    }
+
     echo "<script>
-        alert('Data pupuk berhasil diupdate');
-        location='kelola_pupuk.php';
+    alert('Kuota berhasil disimpan');
+    location='kelola_pupuk.php';
     </script>";
 }
 
-/* PROSES HAPUS */
+// ================= EDIT =================
+if (isset($_POST['edit'])) {
+
+    $id     = $_POST['id_pupuk'];
+    $jenis  = mysqli_real_escape_string($koneksi, $_POST['jenis_pupuk']);
+    $jumlah = (int) $_POST['jumlah_pupuk'];
+    $harga  = (int) $_POST['harga_satuan'];
+    $total  = $jumlah * $harga;
+
+    // CEK KUOTA
+    $qKuota = mysqli_query($koneksi,"
+        SELECT total_kuota FROM kuota_pupuk
+        WHERE jenis_pupuk='$jenis'
+    ");
+
+    if (mysqli_num_rows($qKuota) == 0) {
+        echo "<script>alert('Jenis pupuk belum memiliki kuota!');</script>";
+    } else {
+
+        $dataKuota = mysqli_fetch_assoc($qKuota);
+
+        $qTerpakai = mysqli_query($koneksi,"
+            SELECT SUM(jumlah_pupuk) as terpakai
+            FROM pupuk_subsidi
+            WHERE jenis_pupuk='$jenis'
+            AND id_pupuk != '$id'
+        ");
+
+        $dataTerpakai = mysqli_fetch_assoc($qTerpakai);
+        $terpakai = $dataTerpakai['terpakai'] ?? 0;
+
+        $sisa = $dataKuota['total_kuota'] - $terpakai;
+
+        if ($jumlah > $sisa) {
+            echo "<script>alert('Kuota tidak mencukupi! Sisa: $sisa sak');</script>";
+        } else {
+
+            mysqli_query($koneksi,"
+                UPDATE pupuk_subsidi
+                SET 
+                    jenis_pupuk='$jenis',
+                    jumlah_pupuk='$jumlah',
+                    harga_satuan='$harga',
+                    total_harga='$total'
+                WHERE id_pupuk='$id'
+            ");
+
+            echo "<script>
+            alert('Data berhasil diupdate');
+            location='kelola_pupuk.php';
+            </script>";
+        }
+    }
+}
+
+// ================= HAPUS =================
 if (isset($_GET['hapus'])) {
-    mysqli_query($koneksi, "
+
+    mysqli_query($koneksi,"
         DELETE FROM pupuk_subsidi
         WHERE id_pupuk='$_GET[hapus]'
     ");
 
     echo "<script>
-        alert('Data pupuk berhasil dihapus');
-        location='kelola_pupuk.php';
+    alert('Data dihapus');
+    location='kelola_pupuk.php';
     </script>";
 }
 ?>
-
-</div>
-</main>
-
-<!-- AUTO RESET SEARCH = -->
-<script>
-function autoResetSearch() {
-    let q = document.getElementById("search").value;
-    if (q.trim() === "") {
-        window.location.href = "kelola_pupuk.php";
-    }
-}
-</script>
 
 <?php include 'footer.php'; ?>
