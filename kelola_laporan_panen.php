@@ -1,25 +1,33 @@
 <?php
 include 'koneksi.php';
-include 'header_pengurus.php';
+include 'header.php';
 ?>
 
 <main class="main">
 <div class="container laporan-cetak">
 
 <?php
-//  JUDUL MUSIM 
+
+// JUDUL MUSIM
 $judulMusim = "Semua Musim Panen";
 if (@$_GET['musim'] == 1) $judulMusim = "Musim Panen I (Februari - Maret)";
 elseif (@$_GET['musim'] == 2) $judulMusim = "Musim Panen II (Oktober - November)";
 elseif (@$_GET['musim'] == 3) $judulMusim = "Musim Panen III (Juni - Juli)";
+
+// SEARCH
+$search = isset($_GET['search']) 
+    ? mysqli_real_escape_string($koneksi, $_GET['search']) 
+    : '';
 ?>
 
 <h2 class="text-center laporan-title">LAPORAN TAHUNAN KELOMPOK TANI</h2>
 <p class="text-center laporan-subtitle">Periode <?= $judulMusim; ?></p>
 
-<!--  FILTER + CETAK  -->
+<!-- FILTER + CETAK -->
 <div class="filter-responsive no-print">
     <form method="GET" class="filter-form">
+
+        <input type="hidden" name="search" value="<?= htmlspecialchars($search); ?>">
 
         <div class="filter-item">
             <select name="musim"
@@ -51,19 +59,19 @@ elseif (@$_GET['musim'] == 3) $judulMusim = "Musim Panen III (Juni - Juli)";
                 ?>
             </select>
 
-            <!-- TOMBOL CETAK -->
             <button type="button"
                 onclick="window.print()"
                 class="btn btn-primary filter-cetak">
                 🖨️ Cetak PDF
             </button>
         </div>
-
     </form>
 </div>
 
 <?php
-//  BUILD WHERE 
+// =======================
+// BUILD WHERE
+// =======================
 $conditions = [];
 
 // Filter Musim
@@ -83,12 +91,21 @@ if (!empty($_GET['tahun'])) {
     $conditions[] = "YEAR(hp.periode_panen) = '$tahun'";
 }
 
+// SEARCH FILTER
+if ($search != '') {
+    $conditions[] = "(
+        p.nama_pengguna LIKE '%$search%' OR
+        hp.jenis_tanaman LIKE '%$search%' OR
+        hp.periode_tanam LIKE '%$search%' OR
+        hp.periode_panen LIKE '%$search%'
+    )";
+}
+
 $where = "";
 if (!empty($conditions)) {
     $where = "WHERE " . implode(" AND ", $conditions);
 }
-
-//  QUERY 
+// QUERY
 $query = "
     SELECT hp.*, p.nama_pengguna
     FROM hasil_panen hp
@@ -140,5 +157,13 @@ if (mysqli_num_rows($result) == 0) {
 
 </div>
 </main>
-
+<!-- AUTO RESET SEARCH = -->
+<script>
+function autoResetSearch() {
+    let q = document.getElementById("search").value;
+    if (q.trim() === "") {
+        window.location.href = "laporan.php";
+    }
+}
+</script>
 <?php include 'footer.php'; ?>
