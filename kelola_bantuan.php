@@ -1,16 +1,21 @@
 <?php
 include 'koneksi.php';
 include 'header_pengurus.php';
+
+$jenisDipilih  = isset($_GET['jenis']) ? $_GET['jenis'] : '';
+$tahunDipilih  = isset($_GET['tahun']) ? $_GET['tahun'] : '';
+$search        = isset($_GET['search']) ? $_GET['search'] : '';
+
+$jenisbantuan = "Semua Jenis Bantuan";
+if ($jenisDipilih == 1) {
+    $jenisbantuan = "Bantuan Alat Tani";
+} elseif ($jenisDipilih == 2) {
+    $jenisbantuan = "Bantuan Bibit Pertanian";
+}
 ?>
 
 <main class="main">
 <div class="container">
-
-<?php
-$jenisbantuan = "Semua Jenis Bantuan";
-if (@$_GET['jenis'] == 1) $jenisbantuan = "Bantuan Alat Tani";
-elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
-?>
 
 <h2 class="main-title">Kelola Data <?= $jenisbantuan; ?></h2>
 
@@ -22,18 +27,16 @@ elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
         + Tambah Bantuan
     </button>
 
-    <form method="GET" id="formbantuan" class="filter-form">
+    <form method="GET" class="filter-form">
 
         <!-- FILTER JENIS -->
         <div class="filter-item">
-            <select name="jenis"
-                    class="form-select"
-                    onchange="this.form.submit()">
+            <select name="jenis" class="form-select" onchange="this.form.submit()">
                 <option value="">Semua Jenis Bantuan</option>
-                <option value="1" <?= (@$_GET['jenis']==1?'selected':''); ?>>
+                <option value="1" <?= ($jenisDipilih==1?'selected':''); ?>>
                     Bantuan Alat Tani
                 </option>
-                <option value="2" <?= (@$_GET['jenis']==2?'selected':''); ?>>
+                <option value="2" <?= ($jenisDipilih==2?'selected':''); ?>>
                     Bantuan Bibit Pertanian
                 </option>
             </select>
@@ -41,9 +44,7 @@ elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
 
         <!-- FILTER TAHUN -->
         <div class="filter-item">
-            <select name="tahun"
-                    class="form-select"
-                    onchange="this.form.submit()">
+            <select name="tahun" class="form-select" onchange="this.form.submit()">
                 <option value="">Semua Tahun</option>
                 <?php
                 $tahunQuery = mysqli_query($koneksi, "
@@ -59,10 +60,15 @@ elseif (@$_GET['jenis'] == 2) $jenisbantuan = "Bantuan Bibit Pertanian";
             </select>
         </div>
 
+        <?php if ($search != "") { ?>
+            <input type="hidden" name="search" value="<?= htmlspecialchars($search); ?>">
+        <?php } ?>
+
     </form>
 </div>
 
 <?php
+// DATA KETUA
 $qKetua = mysqli_query($koneksi, "
     SELECT id_pengguna, nama_pengguna, jabatan
     FROM pengguna
@@ -96,17 +102,24 @@ $ketua = mysqli_fetch_assoc($qKetua);
 $no = 1;
 $where = " WHERE 1=1 ";
 
-// filter jenis bantuan
-if (isset($_GET['jenis']) && $_GET['jenis'] != "") {
-    if ($_GET['jenis'] == 1) {
+// FILTER JENIS
+if ($jenisDipilih != "") {
+    if ($jenisDipilih == 1) {
         $where .= " AND b.jenis_bantuan='Alat'";
-    } elseif ($_GET['jenis'] == 2) {
+    } elseif ($jenisDipilih == 2) {
         $where .= " AND b.jenis_bantuan='Bibit'";
     }
 }
 
-if (isset($_GET['search']) && $_GET['search'] != "") {
-    $search = mysqli_real_escape_string($koneksi, $_GET['search']);
+// FILTER TAHUN
+if ($tahunDipilih != "") {
+    $tahunDipilih = mysqli_real_escape_string($koneksi, $tahunDipilih);
+    $where .= " AND YEAR(b.tanggal_diberikan) = '$tahunDipilih'";
+}
+
+// FILTER SEARCH
+if ($search != "") {
+    $search = mysqli_real_escape_string($koneksi, $search);
     $where .= " AND (
         b.nama_bantuan LIKE '%$search%' OR
         b.jenis_bantuan LIKE '%$search%' OR
@@ -174,7 +187,6 @@ if (mysqli_num_rows($result) == 0) {
 
 <div class="modal-header">
     <h5 class="modal-title">Tambah Bantuan</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
@@ -198,7 +210,8 @@ if (mysqli_num_rows($result) == 0) {
 </div>
 
 <div class="modal-footer">
-    <button type="submit" name="tambah" class="btn btn-primary">Simpan</button>
+    <button type="submit" name="tambah" class="btn btn-primary">Tambah</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
 </div>
 
 </form>
@@ -240,15 +253,15 @@ while ($e = mysqli_fetch_assoc($qEdit)) {
 
 <div class="modal-header">
     <h5 class="modal-title">Edit Bantuan</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
 <input type="hidden" name="id_bantuan" value="<?= $e['id_bantuan']; ?>">
 
 <label>Jenis Bantuan</label>
-<input type="text" value="<?= $e['jenis_bantuan']; ?>" class="form-control" readonly>
-
+<div class="readonly-text">
+    <?= htmlspecialchars($e['jenis_bantuan']); ?>
+</div>
 <label class="mt-2">Nama Bantuan</label>
 <input type="text" name="nama_bantuan"
        value="<?= htmlspecialchars($e['nama_bantuan']); ?>"
@@ -266,7 +279,8 @@ while ($e = mysqli_fetch_assoc($qEdit)) {
 </div>
 
 <div class="modal-footer">
-    <button type="submit" name="update" class="btn btn-success">Update</button>
+    <button type="submit" name="update" class="btn btn-success">Simpan</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
 </div>
 
 </form>
