@@ -118,6 +118,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <div class="container main-nav">
                     <div class="main-nav-start">
                         <form action="<?php echo $currentPage; ?>" method="GET" class="search-form">
+                            <?php
+                            foreach ($_GET as $key => $value) {
+                                if ($key != 'search') {
+                                    echo '<input type="hidden" name="'.htmlspecialchars($key).'" value="'.htmlspecialchars($value).'">';
+                                }
+                            }
+                            ?>
+
                             <div class="search-wrapper">
                                 <i data-feather="search" aria-hidden="true"></i>
                                 <input type="text" 
