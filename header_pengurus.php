@@ -51,7 +51,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a class="show-cat-btn <?php echo ($currentPage == 'kelola_pengurus.php') ? 'active' : ''; ?>" href="kelola_pengurus.php" >
                                 <span class="menu-content">
                                     <i data-feather="user" aria-hidden="true"></i>
-                                    <span class="menu-text">Pengurus</span>
+                                    <span class="menu-text">Kelola Pengurus</span>
                                 </span>
                                 </a>
 
@@ -60,7 +60,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a class="show-cat-btn <?php echo ($currentPage == 'kelola_anggota.php') ? 'active' : ''; ?>" href="kelola_anggota.php" >
                                 <span class="menu-content">
                                     <i data-feather="users" aria-hidden="true"></i>
-                                    <span class="menu-text">Anggota</span>
+                                    <span class="menu-text">Kelola Anggota</span>
                                 </span>
                             </a>
                         </li>
@@ -68,7 +68,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                              <a class="show-cat-btn <?php echo ($currentPage == 'kelola_pupuk.php') ? 'active' : ''; ?>" href="kelola_pupuk.php" >
                                 <span class="menu-content">
                                     <i data-feather="package" aria-hidden="true"></i>
-                                    <span class="menu-text">Pupuk Subsidi</span>
+                                    <span class="menu-text">Kelola Pupuk Subsidi</span>
                                 </span>
                             </a>
                         </li>
@@ -76,7 +76,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a class="show-cat-btn <?php echo ($currentPage == 'kelola_panen.php') ? 'active' : ''; ?>" href="kelola_panen.php" >
                                 <span class="menu-content">
                                     <i data-feather="feather" aria-hidden="true"></i>
-                                    <span class="menu-text">Data Panen</span>
+                                    <span class="menu-text">Kelola Data Panen</span>
                                 </span>
                             </a>
                         </li>
@@ -84,7 +84,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <a class="show-cat-btn <?php echo ($currentPage == 'kelola_bantuan.php') ? 'active' : ''; ?>" href="kelola_bantuan.php" >
                                 <span class="menu-content">
                                     <i data-feather="truck" aria-hidden="true"></i>
-                                    <span class="menu-text">Bantuan</span>
+                                    <span class="menu-text">Kelola Bantuan</span>
                                 </span>
                             </a>
                         </li>
@@ -114,6 +114,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <div class="container main-nav">
                     <div class="main-nav-start">
                         <form action="<?php echo $currentPage; ?>" method="GET" class="search-form">
+                            <?php
+                            foreach ($_GET as $key => $value) {
+                                if ($key != 'search') {
+                                    echo '<input type="hidden" name="'.htmlspecialchars($key).'" value="'.htmlspecialchars($value).'">';
+                                }
+                            }
+                            ?>
+
                             <div class="search-wrapper">
                                 <i data-feather="search" aria-hidden="true"></i>
                                 <input type="text" 
